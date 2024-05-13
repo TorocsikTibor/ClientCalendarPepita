@@ -25,7 +25,7 @@ class CalendarDTO implements JsonSerializable
         $this->client_name = $client_name;
     }
 
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return [
             'start_date' => $this->start_date,

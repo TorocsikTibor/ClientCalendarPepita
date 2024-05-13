@@ -48,7 +48,7 @@ class CalendarService
             $startEventDateTime = Carbon::parse($event->start_date . ' ' . $event->start_time);
             $endEventDateTime = Carbon::parse(($event->end_date ? : $event->start_date) . ' ' . $event->end_time);
 
-            $dayName = $this->dayService->getNameFromNumber($event->day); //exception kezelés
+            $dayName = $this->dayService->getNameFromNumber($event->day);
 
             $futureDateStart = Carbon::create($newEventStart->format('Y-m-d') . ' ' . $event->start_time);
             $futureDateEnd = Carbon::create($newEventEnd->format('Y-m-d') . ' ' . $event->end_time);
@@ -57,7 +57,7 @@ class CalendarService
                 RepeatType::NONE->value => $this->checkCollisionForNone($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd),
                 RepeatType::EVERY_WEEK->value => $this->checkCollisionForEveryWeek($newEventStart, $newEventEnd,$futureDateStart, $futureDateEnd, $dayName),
                 RepeatType::ODD_WEEK->value => $this->checkCollisionForOddWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName),
-                RepeatType::EVEN_WEEK->value => $this->checkCollisionForEvenWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName),
+                RepeatType::EVEN_WEEK->value => $this->checkCollisionForOddWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName, false),
             };
 
             if (!$collision) {
@@ -67,7 +67,7 @@ class CalendarService
         return true;
     }
 
-    public function create($startDateTime, $endDateTime, $clientName)
+    public function create($startDateTime, $endDateTime, $clientName): mixed
     {
         $calendarDTO = new CalendarDTO(
             Carbon::parse($startDateTime)->format('Y-m-d'),
@@ -85,37 +85,23 @@ class CalendarService
     private function isEventCollision($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd)
     {
         if ($startEventDateTime->between($newEventStart, $newEventEnd, false) || $endEventDateTime->between($newEventStart, $newEventEnd, false) || $newEventStart->between($startEventDateTime, $endEventDateTime, false)) {
-            return response()->json(['error' => 'Overlap between dates']);
+            return true;
         }
     }
 
     public function checkCollisionForNone($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd): bool
     {
-        if ($this->isEventCollision($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd)) {
-            return false;
-        }
-        return true;
+        return !($this->isEventCollision($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd));
     }
     public function checkCollisionForEveryWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName): bool
     {
-        if (Carbon::parse($newEventStart)->dayName === $dayName && $this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-            return false;
-        }
-        return true;
+        return !(Carbon::parse($newEventStart)->dayName === $dayName && $this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd));
     }
-    public function checkCollisionForOddWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName): bool
+    public function checkCollisionForOddWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName, $isOddWeek = true): bool
     {
         $currentWeekNumber = Carbon::parse($newEventStart)->week;
-        if ($currentWeekNumber % 2 !== 0 && Carbon::parse($newEventStart)->dayName === $dayName && $this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-            return false;
-        }
-        return true;
-    }
-    public function checkCollisionForEvenWeek($newEventStart, $newEventEnd, $futureDateStart, $futureDateEnd, $dayName): bool
-    {
-        $currentWeekNumber = Carbon::parse($newEventStart)->week;
-        if ($currentWeekNumber % 2 === 0 && Carbon::parse($newEventStart)->dayName === $dayName && $this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-            return false;
+        if (($isOddWeek && $currentWeekNumber % 2 !== 0) || (!$isOddWeek && $currentWeekNumber % 2 === 0)) {
+            return !(Carbon::parse($newEventStart)->dayName === $dayName && $this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd));
         }
         return true;
     }

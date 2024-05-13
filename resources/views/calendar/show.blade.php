@@ -27,6 +27,11 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 selectable: true,
+                views: {
+                    month: {
+                        selectable: false
+                    }
+                },
                 headerToolbar: {
                     start: 'prev next today',
                     center: 'title',

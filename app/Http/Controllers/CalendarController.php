@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\DTO\CalendarDTO;
 use App\Services\CalendarService;
-use App\Services\DayService;
-use Carbon\Carbon;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
@@ -15,12 +12,10 @@ use Illuminate\Http\Request;
 class CalendarController extends Controller
 {
     private CalendarService $calendarService;
-    private DayService $dayService;
 
-    public function __construct(CalendarService $calendarService, DayService $dayService)
+    public function __construct(CalendarService $calendarService)
     {
         $this->calendarService = $calendarService;
-        $this->dayService = $dayService;
     }
 
     public function index(): Factory|Application|View

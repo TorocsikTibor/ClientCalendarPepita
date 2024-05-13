@@ -2,12 +2,23 @@
 
 namespace App\Factories;
 
+use App\DTO\NonRecuringEventDTO;
+use App\DTO\RecuringEventDTO;
 use App\Enums\RepeatType;
+use App\Models\CalendarEvent;
 use Carbon\Carbon;
 
 class CalendarEventFactory
 {
-    public static function createRecurringEvent($event): array
+    public function create(CalendarEvent $event): RecuringEventDTO|NonRecuringEventDTO
+    {
+        if ($event->repeat === RepeatType::NONE->value) {
+            return $this->createNonRecurringEvent($event);
+        }
+        return $this->createRecurringEvent($event);
+    }
+
+    private function createRecurringEvent(CalendarEvent $event): RecuringEventDTO
     {
         $startTime = Carbon::parse($event->start_time);
         $endTime = Carbon::parse($event->end_time);
@@ -15,20 +26,18 @@ class CalendarEventFactory
         $diffString = $endTime->diffInHours($startTime);
         $duration = Carbon::createFromTime($diffString)->format('H:i');
 
-        $formatCalendar = [
-            'title' => $event->client_name,
-            'duration' => $duration,
-            'rrule' => [
-                'freq' => 'weekly',
-                'interval' => 2,
-                'byweekday' => [$event->day],
-                'dtstart' => $event->start_date . 'T' . $event->start_time,
-                'until' => ($event->end_date ? : Carbon::now()->endOfYear()->format('Y-m-d'))
-            ]
-        ];
+
+        $formatCalendar = new RecuringEventDTO(
+            $event->client_name, $duration,
+            'weekly',
+            2,
+            [$event->day],
+            $event->start_date . 'T' . $event->start_time,
+            $event->end_date ?: Carbon::now()->endOfYear()->format('Y-m-d')
+        );
 
         if ($event->repeat === RepeatType::EVERY_WEEK->value) {
-            $formatCalendar['rrule']['interval'] = 1;
+            $formatCalendar->setRruleByKey('freq', 1);
         }
 
         $currentWeekNumber = Carbon::parse($event->start_date)->week;
@@ -37,18 +46,18 @@ class CalendarEventFactory
         if (($event->repeat === RepeatType::ODD_WEEK->value && $currentWeekNumber % 2 === 0)
             || ($event->repeat === RepeatType::EVEN_WEEK->value && $currentWeekNumber % 2 !== 0)
         ) {
-            $formatCalendar['rrule']['dtstart'] = $currentWeek->addWeeks(1)->format('Y-m-d') . 'T' . $event->start_time;
+            $formatCalendar->setRruleByKey('dtstart', $currentWeek->addWeeks(1)->format('Y-m-d') . 'T' . $event->start_time);
         }
 
         return $formatCalendar;
     }
 
-    public static function createNonRecurringEvent($event): array
+    private function createNonRecurringEvent(CalendarEvent $event): NonRecuringEventDTO
     {
-        return [
-            'title' => $event->client_name,
-            'start' => $event->start_date . 'T' . $event->start_time,
-            'end' => ($event->end_date ? : $event->start_date) . 'T' . $event->end_time
-        ];
+        return new NonRecuringEventDTO(
+            $event->client_name,
+            $event->start_date . 'T' . $event->start_time,
+            ($event->end_date ?: $event->start_date) . 'T' . $event->end_time
+        );
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\CalendarEventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +14,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [CalendarController::class, 'index'])->name('calendar.index');
-Route::get('/calendar/fetch', [CalendarController::class, 'fetchCalendar'])->name('calendar.fetchCalendar');
-Route::post('/calendar/create', [CalendarController::class, 'create'])->name('calendar.create');
+Route::get('/', [CalendarEventController::class, 'index'])->name('calendar.index');

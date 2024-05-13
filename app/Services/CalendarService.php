@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\DTO\CalendarDTO;
 use App\Enums\RepeatType;
+use App\Factories\CalendarEventFactory;
 use App\Repositories\CalendarRepository;
 use Carbon\Carbon;
-use JsonSerializable;
 
 class CalendarService // DTO menjen azon keresztül legyen majd visszaadva az érték
 {
@@ -25,7 +25,13 @@ class CalendarService // DTO menjen azon keresztül legyen majd visszaadva az é
         $calendarEventDetails = [];
 
         foreach ($calendarEvents as $event) {
+            if ($event->repeat === RepeatType::NONE->value) {
+                $calendarEventDetails[] = CalendarEventFactory::createNonRecurringEvent($event);
+            } else {
+                $calendarEventDetails[] = CalendarEventFactory::createRecurringEvent($event);
+            }
 
+/*
             $startTime = Carbon::parse($event->start_time);
             $endTime = Carbon::parse($event->end_time);
 
@@ -66,12 +72,13 @@ class CalendarService // DTO menjen azon keresztül legyen majd visszaadva az é
                 $formatCalendar['rrule']['dtstart'] = $currentWeek->addWeeks(1)->format('Y-m-d') . 'T' . $event->start_time;
             }
 
-            $calendarEventDetails[] = $formatCalendar;
+            $calendarEventDetails[] = $formatCalendar;*/
         }
+        
         return $calendarEventDetails;
     }
 
-    public function checkCalendar(string $startDateTime, string $endDateTime, string $clientName): bool
+    public function checkCalendar(string $startDateTime, string $endDateTime): bool
     {
 
         $calendarEvents = $this->calendarRepository->getCalendar();
@@ -90,8 +97,6 @@ class CalendarService // DTO menjen azon keresztül legyen majd visszaadva az é
 
             $futureDateStart = Carbon::create($newEventStart->format('Y-m-d') . ' ' . $event->start_time);
             $futureDateEnd = Carbon::create($newEventEnd->format('Y-m-d') . ' ' . $event->end_time);
-            // if helyett matchek legyen, lerövidítii
-
 
             return match ($event->repeat) {
                 RepeatType::NONE->value => $this->checkCollisionForNone($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd),
@@ -99,32 +104,6 @@ class CalendarService // DTO menjen azon keresztül legyen majd visszaadva az é
                 RepeatType::ODD_WEEK->value => $this->checkCollisionForOddWeek($newEventStart, $newEventEnd,$futureDateStart, $futureDateEnd, $dayName),
                 RepeatType::EVEN_WEEK->value => $this->checkCollisionForEvenWeek($newEventStart, $newEventEnd,$futureDateStart, $futureDateEnd, $dayName),
             };
-
-/*            if ($event->repeat === RepeatType::NONE->value) {
-                if ($this->isEventCollision($startEventDateTime, $endEventDateTime, $newEventStart, $newEventEnd)) {
-                    return false;
-                }
-            }
-
-            if ($event->repeat === RepeatType::EVERY_WEEK->value && Carbon::parse($newEventStart)->dayName === $dayName) {
-                if ($this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-                    return false;
-                }
-            }
-
-            $currentWeekNumber = Carbon::parse($newEventStart)->week;
-
-            if ($event->repeat === RepeatType::ODD_WEEK->value && $currentWeekNumber % 2 !== 0 && Carbon::parse($newEventStart)->dayName === $dayName) {
-                if ($this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-                    return false;
-                }
-            }
-
-            if ($event->repeat === RepeatType::EVEN_WEEK->value && $currentWeekNumber % 2 === 0 && Carbon::parse($newEventStart)->dayName === $dayName) {
-                if ($this->isEventCollision($futureDateStart, $futureDateEnd, $newEventStart, $newEventEnd)) {
-                    return false;
-                }
-            }*/
         }
 
         return true;

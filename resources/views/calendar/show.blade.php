@@ -66,7 +66,7 @@
                             console.log('Sikerült: ', data);
                         })
                         .catch(error => {
-                            console.error('Hiba történt:', error);
+                            window.alert(error.message);
                         });
                 }
             });

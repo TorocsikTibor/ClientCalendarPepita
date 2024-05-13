@@ -4,47 +4,31 @@ namespace App\Services;
 
 class DayService
 {
-    public function getNameFromNumber($number)
+    public function getNameFromNumber($number): string
     {
-        switch ($number) {
-            case 0:
-                return 'Monday';
-            case 1:
-                return 'Tuesday';
-            case 2:
-                return 'Wednesday';
-            case 3:
-                return 'Thursday';
-            case 4:
-                return 'Friday';
-            case 5:
-                return 'Saturday';
-            case 6:
-                return 'Sunday';
-            default:
-                return 'Invalid day';
-        }
+        return match ($number) {
+            0 => 'Monday',
+            1 => 'Tuesday',
+            2 => 'Wednesday',
+            3 => 'Thursday',
+            4 => 'Friday',
+            5 => 'Saturday',
+            6 => 'Sunday',
+            default => 'Invalid day',
+        };
     }
 
-    public function getNameFromString($string)
+    public function getNameFromString($string): int|string
     {
-        switch ($string) {
-            case 'Monday':
-                return 0;
-            case 'Tuesday':
-                return 1;
-            case 'Wednesday':
-                return 2;
-            case 'Thursday':
-                return 3;
-            case 'Friday':
-                return 4;
-            case 'Saturday':
-                return 5;
-            case 'Sunday':
-                return 6;
-            default:
-                return 'Invalid day';
-        }
+        return match ($string) {
+            'Monday' => 0,
+            'Tuesday' => 1,
+            'Wednesday' => 2,
+            'Thursday' => 3,
+            'Friday' => 4,
+            'Saturday' => 5,
+            'Sunday' => 6,
+            default => 'Invalid day',
+        };
     }
 }

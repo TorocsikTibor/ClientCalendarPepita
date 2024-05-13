@@ -39,8 +39,8 @@ class CalendarController extends Controller
         $endDateTime = $request->get('endTime');
         $clientName = $request->get('clientName');
 
-        if (!$this->calendarService->checkCalendar($startDateTime, $endDateTime, $clientName)) {
-            return response()->json(['error' => 'Overlap between events']);
+        if (!$this->calendarService->checkCalendar($startDateTime, $endDateTime)) {
+            return response()->json(['error' => 'Overlap between events'], 402);
         }
 
         return response()->json($this->calendarService->create($startDateTime, $endDateTime, $clientName));
